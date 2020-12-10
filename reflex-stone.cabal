@@ -1,0 +1,36 @@
+cabal-version:      >=1.10
+name:               reflex-stone
+version:            0.1.0.0
+license:            BSD3
+license-file:       LICENSE
+author:             Sridhar Ratnakumar
+maintainer:         srid@srid.ca
+build-type:         Simple
+extra-source-files: README.md
+
+executable reflex-stone
+  hs-source-dirs:     src
+  main-is:            Main.hs
+  build-depends:
+      base
+    , reflex
+    , reflex-dom
+    , text
+
+  default-extensions:
+    DataKinds
+    FlexibleContexts
+    LambdaCase
+    OverloadedStrings
+    ScopedTypeVariables
+
+  ghc-options:        -Wall -threaded
+
+  if impl(ghcjs -any)
+    ghc-options: -dedupe
+    cpp-options: -DGHCJS_BROWSER
+
+  default-language:   Haskell2010
+
+  if os(osx)
+    ghc-options: -dynamic
