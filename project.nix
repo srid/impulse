@@ -17,11 +17,11 @@ let
     useWarp = true;
     withHoogle = false;
     packages = {
-      reflex-stone = pkgs.lib.cleanSource (gitignoreSource ./.);
+      rememorate = pkgs.lib.cleanSource (gitignoreSource ./.);
     };
     shells = {
-      ghc = ["reflex-stone"];
-      ghcjs = ["reflex-stone"];
+      ghc = ["rememorate"];
+      ghcjs = ["rememorate"];
     };
   });
 in {

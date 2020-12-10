@@ -1,5 +1,5 @@
 cabal-version:      >=1.10
-name:               reflex-stone
+name:               rememorate
 version:            0.1.0.0
 license:            BSD3
 license-file:       LICENSE
@@ -8,7 +8,7 @@ maintainer:         srid@srid.ca
 build-type:         Simple
 extra-source-files: README.md
 
-executable reflex-stone
+executable rememorate
   hs-source-dirs:     src
   main-is:            Main.hs
   build-depends:

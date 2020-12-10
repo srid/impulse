@@ -1,4 +1,4 @@
-# Revision history for reflex-stone
+# Revision history for rememorate
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

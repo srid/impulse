@@ -12,7 +12,7 @@ headWidget :: DomBuilder t m => m ()
 headWidget = do
   elAttr "meta" ("http-equiv" =: "Content-Type" <> "content" =: "text/html; charset=utf-8") blank
   elAttr "meta" ("name" =: "viewport" <> "content" =: "width=device-width, initial-scale=1") blank
-  el "title" $ text "reflex-stone"
+  el "title" $ text "rememorate"
 
 bodyWidget ::
   ( DomBuilder t m,
@@ -22,7 +22,7 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  el "h1" $ text "reflex-stone"
+  el "h1" $ text "rememorate"
   clicked <- stoneButton
   cnt <- foldDyn (+) (0 :: Int) $ 1 <$ clicked
   elClass "p" "result" $ do
@@ -36,7 +36,7 @@ bodyWidget = do
     elAttr "a" ("href" =: homePage) $
       text "View source on GitHub"
   where
-    homePage = "https://github.com/srid/reflex-stone"
+    homePage = "https://github.com/srid/rememorate"
 
 stoneButton :: DomBuilder t m => m (Event t ())
 stoneButton = do
