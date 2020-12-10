@@ -19,7 +19,9 @@ import Network.WebSockets (defaultConnectionOptions)
 import Language.Javascript.JSaddle.Types (JSM)
 import Language.Javascript.JSaddle.Run (syncPoint)
 import Language.Javascript.JSaddle.WebSockets
-    ( jsaddleApp, jsaddleOr )
+    (jsaddleJs,  jsaddleAppWithJsOr, jsaddleOr )
+import qualified Network.Wai as W
+import qualified Network.HTTP.Types as H
 #endif
 
 -- | Run the given 'JSM' action as the main entry point.  Either directly
@@ -31,5 +33,10 @@ run _port = id
 run :: Int -> JSM () -> IO ()
 run port f =
     runSettings (setPort port (setTimeout 3600 defaultSettings)) =<<
-        jsaddleOr defaultConnectionOptions (f >> syncPoint) jsaddleApp
+        jsaddleOr defaultConnectionOptions (f >> syncPoint) jsaddleAppOr
+    where
+      jsaddleAppOr req sendResponse =
+        jsaddleAppWithJsOr (jsaddleJs False)
+          (\_ _ -> sendResponse $ W.responseLBS H.status403 [("Content-Type", "text/plain")] "Forbidden")
+          req sendResponse
 #endif

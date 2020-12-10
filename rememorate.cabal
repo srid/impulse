@@ -23,7 +23,9 @@ executable rememorate
       warp,
       websockets,
       jsaddle,
-      jsaddle-warp
+      jsaddle-warp,
+      wai,
+      http-types
 
   default-extensions:
     DataKinds
