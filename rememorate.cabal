@@ -18,15 +18,21 @@ executable rememorate
     , reflex
     , reflex-dom
     , text
+    , aeson
+    , bytestring
+    , relude >= 0.7.0.0
+    , jsaddle
   if !impl(ghcjs)
     build-depends:
       warp,
       websockets,
-      jsaddle,
       jsaddle-warp,
       wai,
-      http-types,
-      bytestring
+      http-types
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Extra)
 
   default-extensions:
     DataKinds
@@ -34,6 +40,8 @@ executable rememorate
     LambdaCase
     OverloadedStrings
     ScopedTypeVariables
+    TypeApplications
+    DeriveGeneric
 
   ghc-options:        -Wall -threaded
 

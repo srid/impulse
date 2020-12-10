@@ -5,10 +5,11 @@ let
   reflexPlatform = import ./dep/reflex-platform { 
     inherit system;
   };
-  project = reflexPlatform.project ({pkgs, ...}: {
+  project = reflexPlatform.project ({pkgs, hackGet ,...}: {
     useWarp = true;
     withHoogle = false;
     packages = {
+      relude = hackGet ./dep/relude;
       rememorate = pkgs.lib.cleanSource (gitignoreSource ./.);
     };
     shells = {
