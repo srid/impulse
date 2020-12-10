@@ -25,7 +25,8 @@ executable rememorate
       jsaddle,
       jsaddle-warp,
       wai,
-      http-types
+      http-types,
+      bytestring
 
   default-extensions:
     DataKinds

@@ -35,8 +35,14 @@ run port f =
     runSettings (setPort port (setTimeout 3600 defaultSettings)) =<<
         jsaddleOr defaultConnectionOptions (f >> syncPoint) jsaddleAppOr
     where
-      jsaddleAppOr req sendResponse =
-        jsaddleAppWithJsOr (jsaddleJs False)
-          (\_ _ -> sendResponse $ W.responseLBS H.status403 [("Content-Type", "text/plain")] "Forbidden")
-          req sendResponse
+      jsaddleAppOr =
+        jsaddleAppWithJsOr (jsaddleJs False) otherApp
+      otherApp req sendResponse = do
+        -- HACK: to serve neuron's json cache
+        let resp = case W.rawPathInfo req of
+              "/cache.json" ->
+                W.responseLBS H.status200 [("Content-Type", "text/plain")] "{\"foo\": 42}"
+              _path ->
+                W.responseLBS H.status403 [("Content-Type", "text/plain")] "Forbidden"
+        sendResponse resp
 #endif
