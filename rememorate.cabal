@@ -1,7 +1,7 @@
-cabal-version:      >=1.10
+cabal-version:      2.4
 name:               rememorate
 version:            0.1.0.0
-license:            BSD3
+license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Sridhar Ratnakumar
 maintainer:         srid@srid.ca
@@ -11,11 +11,19 @@ extra-source-files: README.md
 executable rememorate
   hs-source-dirs:     src
   main-is:            Main.hs
+  exposed-modules:
+    Rememorate.Run
   build-depends:
       base
     , reflex
     , reflex-dom
     , text
+  if !impl(ghcjs)
+    build-depends:
+      warp,
+      websockets,
+      jsaddle,
+      jsaddle-warp
 
   default-extensions:
     DataKinds

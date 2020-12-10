@@ -1,12 +1,15 @@
 module Main where
 
+import Control.Monad (void)
 import Control.Monad.Fix (MonadFix)
 import qualified Data.Text as T
-import Reflex.Dom
+import Reflex.Dom.Core
+import qualified Reflex.Dom.Main as Main
+import Rememorate.Run (run)
 
 main :: IO ()
 main =
-  mainWidgetWithHead headWidget bodyWidget
+  run 3003 $ Main.mainWidgetWithHead headWidget bodyWidget
 
 headWidget :: DomBuilder t m => m ()
 headWidget = do
@@ -40,7 +43,7 @@ bodyWidget = do
 
 stoneButton :: DomBuilder t m => m (Event t ())
 stoneButton = do
-  let attr = ("style" =: "font-size: 200%;")
+  let attr = "style" =: "font-size: 200%;"
   clickEvent $ elAttr' "button" attr stone
 
 stone :: DomBuilder t m => m ()
@@ -57,5 +60,5 @@ clickEvent ::
   ) =>
   m (target, a) ->
   m (Event t ())
-clickEvent w =
-  fmap (fmap (const ()) . domEvent Click . fst) w
+clickEvent =
+  fmap (void . domEvent Click . fst)
