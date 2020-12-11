@@ -8,6 +8,9 @@ import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
+import Neuron.Zettelkasten.Graph.Type (ZettelGraph)
+import Neuron.Zettelkasten.ID (ZettelID)
+import Neuron.Zettelkasten.Zettel (ZettelError)
 import Reflex.Dom.Core
 import qualified Reflex.Dom.Main as Main
 import Rememorate.Run (run)
@@ -21,6 +24,9 @@ headWidget = do
   elAttr "meta" ("http-equiv" =: "Content-Type" <> "content" =: "text/html; charset=utf-8") blank
   elAttr "meta" ("name" =: "viewport" <> "content" =: "width=device-width, initial-scale=1") blank
   el "title" $ text "rememorate"
+
+-- TODO: normalize and expose in neuron:lib
+type CacheData = (ZettelGraph, Map ZettelID (NonEmpty ZettelError))
 
 bodyWidget ::
   ( DomBuilder t m,
@@ -36,7 +42,7 @@ bodyWidget ::
   m ()
 bodyWidget = do
   el "h1" $ text "rememorate"
-  resp <- getCache @Test
+  resp <- getCache @CacheData
   el "pre" $
     el "code" $ do
       dynText $ show <$> resp
@@ -54,9 +60,6 @@ bodyWidget = do
       text "View source on GitHub"
   where
     homePage = "https://github.com/srid/rememorate"
-
-data Test = Test {foo :: Int}
-  deriving (Generic, FromJSON, Show, Eq)
 
 getCache ::
   forall a t m.

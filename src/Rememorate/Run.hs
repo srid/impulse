@@ -39,10 +39,11 @@ run port f =
         jsaddleAppWithJsOr (jsaddleJs False) otherApp
       otherApp req sendResponse = do
         -- HACK: to serve neuron's json cache
-        let resp = case W.rawPathInfo req of
-              "/cache.json" ->
-                W.responseLBS H.status200 [("Content-Type", "text/plain")] "{\"foo\": 42}"
-              _path ->
-                W.responseLBS H.status403 [("Content-Type", "text/plain")] "Forbidden"
+        resp <- case W.rawPathInfo req of
+          "/cache.json" -> do
+            s <- readFileLBS "cache.json"
+            pure $ W.responseLBS H.status200 [("Content-Type", "text/plain")] s
+          _path ->
+            pure $ W.responseLBS H.status403 [("Content-Type", "text/plain")] "Forbidden"
         sendResponse resp
 #endif
