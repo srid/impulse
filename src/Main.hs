@@ -8,9 +8,13 @@ import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
+import qualified Neuron.Web.Query.View as QV
+import Neuron.Web.Route
+import qualified Neuron.Zettelkasten.Graph as G
 import Neuron.Zettelkasten.Graph.Type (ZettelGraph)
 import Neuron.Zettelkasten.ID (ZettelID)
 import Neuron.Zettelkasten.Zettel (ZettelError)
+import qualified Neuron.Zettelkasten.Zettel as Z
 import Reflex.Dom.Core
 import qualified Reflex.Dom.Main as Main
 import Rememorate.Run (run)
@@ -45,24 +49,28 @@ bodyWidget ::
   m ()
 bodyWidget = do
   el "h1" $ text "rememorate"
-  resp <- getCache @CacheData
-  el "pre" $
-    el "code" $ do
-      dynText $ show <$> resp
-  clicked <- stoneButton
-  cnt <- foldDyn (+) (0 :: Int) $ 1 <$ clicked
-  elClass "p" "result" $ do
-    dyn_ $
-      ffor cnt $ \case
-        0 -> text "Go ahead and hit the stone"
-        n -> do
-          text $ T.pack (show n)
-          text " heads!"
-  divClass "footer" $ do
-    elAttr "a" ("href" =: homePage) $
-      text "View source on GitHub"
-  where
-    homePage = "https://github.com/srid/rememorate"
+  mresp <- maybeDyn =<< getCache @CacheData
+  dyn_ $
+    ffor mresp $ \case
+      Nothing -> text "Loading"
+      Just resp -> do
+        eresp <- eitherDyn resp
+        dyn_ $
+          ffor eresp $ \case
+            Left errDyn -> do
+              text "ERROR: "
+              dynText $ T.pack <$> errDyn
+            Right nDyn -> do
+              let zs = G.getZettels . fst <$> nDyn
+                  -- TODO
+                  rcfg = RouteConfig True (\_someR _attrs w -> elAttr "a" ("href" =: "/foo") w) (\_someR -> "/todo")
+              void $
+                runNeuronWeb rcfg $
+                  simpleList zs $ \zDyn -> do
+                    el "li" $
+                      dyn_ $
+                        ffor zDyn $ \(z :: Z.Zettel) ->
+                          QV.renderZettelLink Nothing Nothing Nothing z
 
 getCache ::
   forall a t m.
@@ -86,25 +94,3 @@ getCache = do
       fromMaybe (Left "Empty response") . sequence
         . traverse (eitherDecode . BL.fromStrict . encodeUtf8)
         . _xhrResponse_responseText
-
-stoneButton :: DomBuilder t m => m (Event t ())
-stoneButton = do
-  let attr = "style" =: "font-size: 200%;"
-  clickEvent $ elAttr' "button" attr stone
-
-stone :: DomBuilder t m => m ()
-stone =
-  text "🗿"
-
--- | Get the click event on an element
---
--- Use as:
---   clickEvent $ el' "a" ...
-clickEvent ::
-  ( DomBuilder t m,
-    HasDomEvent t target 'ClickTag
-  ) =>
-  m (target, a) ->
-  m (Event t ())
-clickEvent =
-  fmap (void . domEvent Click . fst)
