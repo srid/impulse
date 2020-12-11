@@ -22,6 +22,7 @@ executable rememorate
     , bytestring
     , relude >= 0.7.0.0
     , jsaddle
+    , neuron
   if !impl(ghcjs)
     build-depends:
       warp,

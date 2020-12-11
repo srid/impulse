@@ -4,7 +4,7 @@ module Main where
 
 import Control.Monad (void)
 import Control.Monad.Fix (MonadFix)
-import Data.Aeson
+import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
