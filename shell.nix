@@ -1,1 +1,3 @@
-(import ./project.nix {}).project.shells.ghc
+{ withHoogle ? false, ...}:
+
+(import ./project.nix {inherit withHoogle; }).project.shells.ghc

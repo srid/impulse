@@ -25,7 +25,10 @@ headWidget = do
   elAttr "meta" ("name" =: "viewport" <> "content" =: "width=device-width, initial-scale=1") blank
   el "title" $ text "rememorate"
 
--- TODO: normalize and expose in neuron:lib
+-- TODO:
+-- - normalize and expose in neuron:lib
+-- - discard surrounding-context in cache (but still use it in cache.json)
+-- - store neuron.json in .neuron/output/
 type CacheData = (ZettelGraph, Map ZettelID (NonEmpty ZettelError))
 
 bodyWidget ::

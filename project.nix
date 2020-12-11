@@ -1,4 +1,5 @@
 { system ? builtins.currentSystem
+, withHoogle ? false
 }:
 let 
   inherit (import ./dep/gitignore { }) gitignoreSource;
@@ -6,8 +7,8 @@ let
     inherit system;
   };
   project = reflexPlatform.project ({pkgs, hackGet ,...}: {
+    inherit withHoogle;
     useWarp = true;
-    withHoogle = false;
 
     packages = let 
       neuronPrj = hackGet ./dep/neuron;
