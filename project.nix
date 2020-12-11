@@ -19,7 +19,7 @@ let
       rememorate = pkgs.lib.cleanSource (gitignoreSource ./.);
 
       # neuron & its dependencies (not already in reflex-platform)
-      neuron =  pkgs.runCommand "neuron" { buildInputs = [ neuronSrc ]; }
+      neuron = pkgs.runCommand "neuron" { buildInputs = [ neuronSrc ]; }
         ''
         mkdir $out
         cp -r -p ${neuronSrc}/* $out/
@@ -40,6 +40,7 @@ let
     };
 
     overrides = self: super: with pkgs.haskell.lib; {
+      neuron = if withHoogle then super.neuron else dontHaddock super.neuron;
       algebraic-graphs = dontCheck super.algebraic-graphs;  # Test fails
     };
 
