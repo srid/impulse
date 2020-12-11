@@ -1,7 +1,8 @@
 {
   "owner": "srid",
   "repo": "neuron",
+  "branch": "master",
   "private": false,
-  "rev": "44855fb8674e74a6b9a6688a8dff0298e9c78124",
-  "sha256": "169k6mkg30gh5fc8jwljq66l3i4bxlr3bivcsx07cr2kyizv9bwc"
+  "rev": "44c0c19945f521a5e55a6ca7bd1754576899ea95",
+  "sha256": "0ksg4d0127cr1zn77a147inl8y0iffkv5ya1mq96rai08fadh5ir"
 }

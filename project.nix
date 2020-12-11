@@ -34,6 +34,8 @@ let
       algebraic-graphs = hackGet ./dep/alga;
       clay = hackGet ./dep/clay;
       dependent-sum-aeson-orphans = hackGet ./dep/dependent-sum-aeson-orphans;
+      # neuron requires >= 0.2.5.0
+      aeson-gadt-th = hackGet ./dep/aeson-gadt-th;
     };
 
     overrides = self: super: with pkgs.haskell.lib; {
