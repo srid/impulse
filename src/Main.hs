@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-
 module Main where
 
 import Control.Monad (void)
@@ -8,8 +6,10 @@ import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
-import qualified Neuron.Web.Query.View as QV
-import Neuron.Web.Route
+import Neuron.Config.Type (Config (Config))
+import qualified Neuron.Web.Query.View as V
+import Neuron.Web.Route (Route (Route_Search), RouteConfig (RouteConfig), runNeuronWeb)
+import qualified Neuron.Web.View as V
 import qualified Neuron.Zettelkasten.Graph as G
 import Neuron.Zettelkasten.Graph.Type (ZettelGraph)
 import Neuron.Zettelkasten.ID (ZettelID)
@@ -25,9 +25,8 @@ main =
 
 headWidget :: DomBuilder t m => m ()
 headWidget = do
-  elAttr "meta" ("http-equiv" =: "Content-Type" <> "content" =: "text/html; charset=utf-8") blank
-  elAttr "meta" ("name" =: "viewport" <> "content" =: "width=device-width, initial-scale=1") blank
-  el "title" $ text "rememorate"
+  let dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
+  V.renderRouteHead dummyConfig (Route_Search Nothing) "dummy"
 
 -- TODO:
 -- - normalize and expose in neuron:lib
@@ -48,29 +47,31 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  el "h1" $ text "rememorate"
-  mresp <- maybeDyn =<< getCache @CacheData
-  dyn_ $
-    ffor mresp $ \case
-      Nothing -> text "Loading"
-      Just resp -> do
-        eresp <- eitherDyn resp
-        dyn_ $
-          ffor eresp $ \case
-            Left errDyn -> do
-              text "ERROR: "
-              dynText $ T.pack <$> errDyn
-            Right nDyn -> do
-              let zs = G.getZettels . fst <$> nDyn
-                  -- TODO
-                  rcfg = RouteConfig True (\_someR _attrs w -> elAttr "a" ("href" =: "/foo") w) (\_someR -> "/todo")
-              void $
-                runNeuronWeb rcfg $
-                  simpleList zs $ \zDyn -> do
-                    el "li" $
-                      dyn_ $
-                        ffor zDyn $ \(z :: Z.Zettel) ->
-                          QV.renderZettelLink Nothing Nothing Nothing z
+  -- TODO: Pull theme from Config bu using `renderRouteBody`
+  elAttr "div" ("class" =: "ui text container" <> "id" =: "neuron-theme-default-blue") $ do
+    el "h1" $ text "rememorate"
+    mresp <- maybeDyn =<< getCache @CacheData
+    dyn_ $
+      ffor mresp $ \case
+        Nothing -> text "Loading"
+        Just resp -> do
+          eresp <- eitherDyn resp
+          dyn_ $
+            ffor eresp $ \case
+              Left errDyn -> do
+                text "ERROR: "
+                dynText $ T.pack <$> errDyn
+              Right nDyn -> do
+                let zs = G.getZettels . fst <$> nDyn
+                    -- TODO
+                    rcfg = RouteConfig True (\_someR _attrs w -> elAttr "a" ("href" =: "/foo") w) (\_someR -> "/todo")
+                void $
+                  runNeuronWeb rcfg $
+                    simpleList zs $ \zDyn -> do
+                      el "li" $
+                        dyn_ $
+                          ffor zDyn $ \(z :: Z.Zettel) ->
+                            V.renderZettelLink Nothing Nothing Nothing z
 
 getCache ::
   forall a t m.
