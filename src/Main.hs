@@ -1,20 +1,18 @@
 module Main where
 
-import Control.Monad (void)
 import Control.Monad.Fix (MonadFix)
 import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
 import Neuron.Config.Type (Config (Config))
-import qualified Neuron.Web.Query.View as V
 import Neuron.Web.Route (Route (Route_Search), RouteConfig (RouteConfig), runNeuronWeb)
+import qualified Neuron.Web.Theme as Theme
 import qualified Neuron.Web.View as V
-import qualified Neuron.Zettelkasten.Graph as G
+import qualified Neuron.Web.ZIndex as ZIndex
 import Neuron.Zettelkasten.Graph.Type (ZettelGraph)
 import Neuron.Zettelkasten.ID (ZettelID)
 import Neuron.Zettelkasten.Zettel (ZettelError)
-import qualified Neuron.Zettelkasten.Zettel as Z
 import Reflex.Dom.Core
 import qualified Reflex.Dom.Main as Main
 import Rememorate.Run (run)
@@ -47,9 +45,15 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  -- TODO: Pull theme from Config bu using `renderRouteBody`
-  elAttr "div" ("class" =: "ui text container" <> "id" =: "neuron-theme-default-blue") $ do
-    el "h1" $ text "rememorate"
+  -- TODO: Pull these stuff from Config by using `renderRouteBody`
+  let themeId = "neuron-theme-default-blue"
+      rcfg = RouteConfig True (\_someR _attrs w -> elAttr "a" ("href" =: "/foo") w) (\_someR -> "/todo")
+  elAttr "div" ("class" =: "ui text container" <> "id" =: themeId) $ do
+    elClass "h1" "header" $ text "Search"
+    divClass "ui fluid icon input search" $ do
+      elAttr "input" ("type" =: "text" <> "id" =: "search-input") blank
+      V.fa "search icon fas fa-search"
+    divClass "ui hidden divider" blank
     mresp <- maybeDyn =<< getCache @CacheData
     dyn_ $
       ffor mresp $ \case
@@ -62,16 +66,20 @@ bodyWidget = do
                 text "ERROR: "
                 dynText $ T.pack <$> errDyn
               Right nDyn -> do
-                let zs = G.getZettels . fst <$> nDyn
-                    -- TODO
-                    rcfg = RouteConfig True (\_someR _attrs w -> elAttr "a" ("href" =: "/foo") w) (\_someR -> "/todo")
-                void $
-                  runNeuronWeb rcfg $
-                    simpleList zs $ \zDyn -> do
-                      el "li" $
-                        dyn_ $
-                          ffor zDyn $ \(z :: Z.Zettel) ->
-                            V.renderZettelLink Nothing Nothing Nothing z
+                let zindexDyn = uncurry ZIndex.buildZIndex <$> nDyn
+                -- TODO: push dynamic inner
+                dyn_ $
+                  ffor zindexDyn $ \zindex ->
+                    runNeuronWeb rcfg $ ZIndex.renderZIndex Theme.Red zindex
+
+{- void $
+  runNeuronWeb rcfg $
+    simpleList zs $ \zDyn -> do
+      el "li" $
+        dyn_ $
+          ffor zDyn $ \(z :: Z.Zettel) ->
+            V.renderZettelLink Nothing Nothing Nothing z
+-}
 
 getCache ::
   forall a t m.
