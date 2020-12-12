@@ -46,31 +46,35 @@ bodyWidget ::
   m ()
 bodyWidget = do
   -- TODO: Pull these stuff from Config by using `renderRouteBody`
-  let themeId = "neuron-theme-default-blue"
-      rcfg = RouteConfig True (\_someR _attrs w -> elAttr "a" ("href" =: "/foo") w) (\_someR -> "/todo")
-  elAttr "div" ("class" =: "ui text container" <> "id" =: themeId) $ do
-    elClass "h1" "header" $ text "Search"
-    divClass "ui fluid icon input search" $ do
-      elAttr "input" ("type" =: "text" <> "id" =: "search-input") blank
-      V.fa "search icon fas fa-search"
-    divClass "ui hidden divider" blank
-    mresp <- maybeDyn =<< getCache @CacheData
-    dyn_ $
-      ffor mresp $ \case
-        Nothing -> text "Loading"
-        Just resp -> do
-          eresp <- eitherDyn resp
-          dyn_ $
-            ffor eresp $ \case
-              Left errDyn -> do
-                text "ERROR: "
-                dynText $ T.pack <$> errDyn
-              Right nDyn -> do
-                let zindexDyn = uncurry ZIndex.buildZIndex <$> nDyn
-                -- TODO: push dynamic inner
-                dyn_ $
-                  ffor zindexDyn $ \zindex ->
-                    runNeuronWeb rcfg $ ZIndex.renderZIndex Theme.Red zindex
+  let rcfg = RouteConfig True (\_someR attrs w -> elAttr "a" ("href" =: "/foo" <> attrs) w) (\_someR -> "/todo")
+      neuronVersion = "0.0"
+      dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
+      neuronTheme = Theme.mkTheme "blue"
+  V.bodyTemplate neuronVersion dummyConfig $ do
+    runNeuronWeb rcfg $ V.actionsNav neuronTheme Nothing Nothing
+    divClass "ui text container" $ do
+      elClass "h1" "header" $ text "Search"
+      divClass "ui fluid icon input search" $ do
+        elAttr "input" ("type" =: "text" <> "id" =: "search-input") blank
+        V.fa "search icon fas fa-search"
+      divClass "ui hidden divider" blank
+      mresp <- maybeDyn =<< getCache @CacheData
+      dyn_ $
+        ffor mresp $ \case
+          Nothing -> text "Loading"
+          Just resp -> do
+            eresp <- eitherDyn resp
+            dyn_ $
+              ffor eresp $ \case
+                Left errDyn -> do
+                  text "ERROR: "
+                  dynText $ T.pack <$> errDyn
+                Right nDyn -> do
+                  let zindexDyn = uncurry ZIndex.buildZIndex <$> nDyn
+                  -- TODO: push dynamic inner
+                  dyn_ $
+                    ffor zindexDyn $ \zindex ->
+                      runNeuronWeb rcfg $ ZIndex.renderZIndex Theme.Red zindex
 
 {- void $
   runNeuronWeb rcfg $
@@ -94,7 +98,7 @@ getCache ::
   m (Dynamic t (Maybe (Either String a)))
 getCache = do
   pb <- getPostBuild
-  resp' <- performRequestAsyncWithError $ XhrRequest "GET" "/cache.json" def <$ pb
+  resp' <- performRequestAsyncWithError $ XhrRequest "GET" "cache.json" def <$ pb
   let resp = ffor resp' $ first show >=> decodeXhrResponseWithError
   holdDyn Nothing $ Just <$> resp
   where
