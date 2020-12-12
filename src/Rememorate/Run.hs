@@ -41,7 +41,7 @@ run port f =
         -- HACK: to serve neuron's json cache
         resp <- case W.rawPathInfo req of
           "/cache.json" -> do
-            s <- readFileLBS "cache.json"
+            s <- readFileLBS "/home/srid/Documents/zk/.neuron/cache.json"
             pure $ W.responseLBS H.status200 [("Content-Type", "text/plain")] s
           _path ->
             pure $ W.responseLBS H.status403 [("Content-Type", "text/plain")] "Forbidden"

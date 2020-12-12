@@ -53,10 +53,15 @@ bodyWidget = do
   V.bodyTemplate neuronVersion dummyConfig $ do
     runNeuronWeb rcfg $ V.actionsNav neuronTheme Nothing Nothing
     divClass "ui text container" $ do
-      elClass "h1" "header" $ text "Search"
-      divClass "ui fluid icon input search" $ do
-        elAttr "input" ("type" =: "text" <> "id" =: "search-input") blank
+      qDyn <- divClass "ui fluid icon input search" $ do
+        qDyn <-
+          fmap value $
+            inputElement $
+              def & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
+        -- elAttr "input" ("type" =: "text" <> "id" =: "search-input") blank
         V.fa "search icon fas fa-search"
+        qSlow <- debounce 0.5 $ updated qDyn
+        holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
       divClass "ui hidden divider" blank
       mresp <- maybeDyn =<< getCache @CacheData
       dyn_ $
@@ -73,8 +78,8 @@ bodyWidget = do
                   let zindexDyn = uncurry ZIndex.buildZIndex <$> nDyn
                   -- TODO: push dynamic inner
                   dyn_ $
-                    ffor zindexDyn $ \zindex ->
-                      runNeuronWeb rcfg $ ZIndex.renderZIndex Theme.Red zindex
+                    ffor2 zindexDyn qDyn $ \zindex mq ->
+                      runNeuronWeb rcfg $ ZIndex.renderZIndex Theme.Red zindex mq
 
 {- void $
   runNeuronWeb rcfg $
