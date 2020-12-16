@@ -62,17 +62,8 @@ bodyWidget = do
                     let neuronTheme = Theme.mkTheme $ Config.theme _neuronCache_config
                     runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
                     divClass "ui text container" $ do
-                      qDyn <- divClass "ui fluid icon input search" $ do
-                        initialQueryE <- urlQueryE [queryKey|q|]
-                        qDyn <-
-                          fmap value $
-                            inputElement $
-                              def
-                                & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
-                                & inputElementConfig_setValue .~ initialQueryE
-                        V.fa "search icon fas fa-search"
-                        qSlow <- debounce 0.5 $ updated qDyn
-                        holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
+                      mquery0 <- urlQueryE [queryKey|q|]
+                      qDyn <- searchInput mquery0
                       divClass "ui hidden divider" blank
                       let zindex = ZIndex.buildZIndex _neuronCache_graph _neuronCache_errors
                       runNeuronGhcjs $ ZIndex.renderZIndex Theme.Red zindex qDyn
@@ -84,13 +75,27 @@ routeConfigGhcjs =
     someRouteUrl :: Some Route -> Text
     someRouteUrl sr = toText $ withSome sr routeHtmlPath
 
+searchInput ::
+  (DomBuilder t m, PerformEvent t m, TriggerEvent t m, MonadIO (Performable m), MonadHold t m, MonadFix m) =>
+  Maybe Text ->
+  m (Dynamic t (Maybe Text))
+searchInput mquery0 = do
+  divClass "ui fluid icon input search" $ do
+    qDyn <-
+      fmap value $
+        inputElement $
+          def
+            & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
+            & inputElementConfig_initialValue .~ fromMaybe "" mquery0
+    V.fa "search icon fas fa-search"
+    qSlow <- debounce 0.5 $ updated qDyn
+    holdDyn mquery0 $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
+
 -- Return the value for given query key (eg: ?q=???) from the URL location.
-urlQueryE :: (MonadJSM m, PostBuild t m) => URI.RText 'URI.QueryKey -> m (Event t Text)
+urlQueryE :: (MonadJSM m, PostBuild t m) => URI.RText 'URI.QueryKey -> m (Maybe Text)
 urlQueryE key = do
   uri <- URI.mkURI @Maybe <$> getLocationUrl
-  let mquery = getQueryParam key =<< uri
-  pb <- getPostBuild
-  pure $ maybe never (<$ pb) mquery
+  pure $ getQueryParam key =<< uri
 
 getCache ::
   forall a t m.
