@@ -1,6 +1,6 @@
 # rememorate
 
-WIP
+WIP => https://github.com/srid/neuron/issues/108
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Build JS using GHCJS:
 
 ```bash
 nix-build
-open ./result/index.html
+cp ./result/q.* ${NEURONOUTPUT}/
 ```
 
 [cache]: https://github.com/obsidiansystems/obelisk#installing-obelisk

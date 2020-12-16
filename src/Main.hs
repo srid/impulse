@@ -28,9 +28,9 @@ headWidget = do
   let dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
   V.renderRouteHead dummyConfig (Route_Search Nothing) "dummy"
 
--- TODO cache type:
--- - discard surrounding-context in cache (but still use it in cache.json)
--- - store neuron.json in .neuron/output/
+-- TODO(before replacing existing z-index/search entirely)
+-- - Tag query, and tag perma urls (to not break existing feature)
+-- - Statically render z-index in q.html?
 
 bodyWidget ::
   ( DomBuilder t m,
@@ -45,11 +45,7 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  -- TODO:
-  -- - Where to get neuronVersion from?
-  -- - Use `renderRouteBody`
-  let neuronVersion = "0.0"
-      runNeuronGhcjs = runNeuronWeb routeConfigGhcjs
+  let runNeuronGhcjs = runNeuronWeb routeConfigGhcjs
   mresp <- maybeDyn =<< getCache @C.NeuronCache
   dyn_ $
     ffor mresp $ \case
@@ -62,9 +58,11 @@ bodyWidget = do
               text "ERROR: "
               dynText $ T.pack <$> errDyn
             Right nDyn -> do
+              -- TODO: push dynamic inner?
               dyn_ $
                 ffor nDyn $ \C.NeuronCache {..} -> do
-                  V.bodyTemplate neuronVersion _neuronCache_config $ do
+                  -- - Use `renderRouteBody` which includes actionbar?
+                  V.bodyTemplate _neuronCache_neuronVersion _neuronCache_config $ do
                     let neuronTheme = Theme.mkTheme $ Config.theme _neuronCache_config
                     runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
                     divClass "ui text container" $ do
@@ -78,12 +76,11 @@ bodyWidget = do
                         holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
                       divClass "ui hidden divider" blank
                       let zindex = ZIndex.buildZIndex _neuronCache_graph _neuronCache_errors
-                      -- TODO: push dynamic inner?
                       runNeuronGhcjs $ ZIndex.renderZIndex Theme.Red zindex qDyn
 
 routeConfigGhcjs :: RouteConfig t m
 routeConfigGhcjs =
-  RouteConfig True (\someR attrs w -> elAttr "a" (attrs <> "href" =: someRouteUrl someR) w) someRouteUrl
+  RouteConfig False (\someR attrs -> elAttr "a" (attrs <> "href" =: someRouteUrl someR)) someRouteUrl
   where
     someRouteUrl :: Some Route -> Text
     someRouteUrl sr = toText $ withSome sr routeHtmlPath

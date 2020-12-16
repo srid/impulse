@@ -10,7 +10,7 @@ let
     <!DOCTYPE html>
     <html>
     <head>
-      <script language="javascript" src="all.js"></script>
+      <script language="javascript" src="q.js"></script>
     </head>
     <body></body>
     </html>
@@ -18,14 +18,14 @@ let
 in 
   pkgs.runCommand "${name}-site" {} ''
     mkdir -p $out
-    cp ${indexHtml} $out/index.html
+    cp ${indexHtml} $out/q.html
     # The original all.js is pretty huge; so let's run it by the closure
     # compiler.    
     # cp ${app}/bin/${name}.jsexe/all.js $out/
     ${pkgs.closurecompiler}/bin/closure-compiler \
         --externs=${app}/bin/${name}.jsexe/all.js.externs \
         --jscomp_off=checkVars \
-        --js_output_file="$out/all.js" \
+        --js_output_file="$out/q.js" \
         -O ADVANCED \
         -W QUIET \
         ${app}/bin/${name}.jsexe/all.js
