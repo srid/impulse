@@ -9,6 +9,7 @@ import Data.Some (Some, withSome)
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
 import Neuron.Config.Type (Config (Config))
+import qualified Neuron.Config.Type as Config
 import qualified Neuron.Web.Cache.Type as C
 import Neuron.Web.Route (Route (Route_Search), RouteConfig (RouteConfig), routeHtmlPath, runNeuronWeb)
 import qualified Neuron.Web.Theme as Theme
@@ -45,41 +46,39 @@ bodyWidget ::
   m ()
 bodyWidget = do
   -- TODO:
-  -- - Put neuron.dhall and neuron version in JSON cache
+  -- - Where to get neuronVersion from?
   -- - Use `renderRouteBody`
   let neuronVersion = "0.0"
-      dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
-      neuronTheme = Theme.mkTheme "blue"
       runNeuronGhcjs = runNeuronWeb routeConfigGhcjs
-  V.bodyTemplate neuronVersion dummyConfig $ do
-    runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
-    divClass "ui text container" $ do
-      qDyn <- divClass "ui fluid icon input search" $ do
-        qDyn <-
-          fmap value $
-            inputElement $
-              def & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
-        V.fa "search icon fas fa-search"
-        qSlow <- debounce 0.5 $ updated qDyn
-        holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
-      divClass "ui hidden divider" blank
-      mresp <- maybeDyn =<< getCache @C.NeuronCache
-      dyn_ $
-        ffor mresp $ \case
-          Nothing -> text "Loading JSON cache..."
-          Just resp -> do
-            eresp <- eitherDyn resp
-            dyn_ $
-              ffor eresp $ \case
-                Left errDyn -> do
-                  text "ERROR: "
-                  dynText $ T.pack <$> errDyn
-                Right nDyn -> do
-                  let zindexDyn = ffor nDyn $ \C.NeuronCache {..} ->
-                        ZIndex.buildZIndex _neuronCache_graph _neuronCache_errors
-                  -- TODO: push dynamic inner
-                  dyn_ $
-                    ffor zindexDyn $ \zindex ->
+  mresp <- maybeDyn =<< getCache @C.NeuronCache
+  dyn_ $
+    ffor mresp $ \case
+      Nothing -> text "Loading JSON cache..."
+      Just resp -> do
+        eresp <- eitherDyn resp
+        dyn_ $
+          ffor eresp $ \case
+            Left errDyn -> do
+              text "ERROR: "
+              dynText $ T.pack <$> errDyn
+            Right nDyn -> do
+              dyn_ $
+                ffor nDyn $ \C.NeuronCache {..} -> do
+                  V.bodyTemplate neuronVersion _neuronCache_config $ do
+                    let neuronTheme = Theme.mkTheme $ Config.theme _neuronCache_config
+                    runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
+                    divClass "ui text container" $ do
+                      qDyn <- divClass "ui fluid icon input search" $ do
+                        qDyn <-
+                          fmap value $
+                            inputElement $
+                              def & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
+                        V.fa "search icon fas fa-search"
+                        qSlow <- debounce 0.5 $ updated qDyn
+                        holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
+                      divClass "ui hidden divider" blank
+                      let zindex = ZIndex.buildZIndex _neuronCache_graph _neuronCache_errors
+                      -- TODO: push dynamic inner?
                       runNeuronGhcjs $ ZIndex.renderZIndex Theme.Red zindex qDyn
 
 routeConfigGhcjs :: RouteConfig t m
