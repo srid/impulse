@@ -1,18 +1,19 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Main where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
+import Data.Some (Some, withSome)
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
 import Neuron.Config.Type (Config (Config))
-import Neuron.Web.Route (Route (Route_Search), RouteConfig (RouteConfig), runNeuronWeb)
+import qualified Neuron.Web.Cache.Type as C
+import Neuron.Web.Route (Route (Route_Search), RouteConfig (RouteConfig), routeHtmlPath, runNeuronWeb)
 import qualified Neuron.Web.Theme as Theme
 import qualified Neuron.Web.View as V
 import qualified Neuron.Web.ZIndex as ZIndex
-import Neuron.Zettelkasten.Graph.Type (ZettelGraph)
-import Neuron.Zettelkasten.ID (ZettelID)
-import Neuron.Zettelkasten.Zettel (ZettelError)
 import Reflex.Dom.Core
 import qualified Reflex.Dom.Main as Main
 import Rememorate.Run (run)
@@ -26,11 +27,9 @@ headWidget = do
   let dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
   V.renderRouteHead dummyConfig (Route_Search Nothing) "dummy"
 
--- TODO:
--- - normalize and expose in neuron:lib
+-- TODO cache type:
 -- - discard surrounding-context in cache (but still use it in cache.json)
 -- - store neuron.json in .neuron/output/
-type CacheData = (ZettelGraph, Map ZettelID (NonEmpty ZettelError))
 
 bodyWidget ::
   ( DomBuilder t m,
@@ -45,28 +44,29 @@ bodyWidget ::
   ) =>
   m ()
 bodyWidget = do
-  -- TODO: Pull these stuff from Config by using `renderRouteBody`
-  let rcfg = RouteConfig True (\_someR attrs w -> elAttr "a" ("href" =: "/foo" <> attrs) w) (\_someR -> "/todo")
-      neuronVersion = "0.0"
+  -- TODO:
+  -- - Put neuron.dhall and neuron version in JSON cache
+  -- - Use `renderRouteBody`
+  let neuronVersion = "0.0"
       dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
       neuronTheme = Theme.mkTheme "blue"
+      runNeuronGhcjs = runNeuronWeb routeConfigGhcjs
   V.bodyTemplate neuronVersion dummyConfig $ do
-    runNeuronWeb rcfg $ V.actionsNav neuronTheme Nothing Nothing
+    runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
     divClass "ui text container" $ do
       qDyn <- divClass "ui fluid icon input search" $ do
         qDyn <-
           fmap value $
             inputElement $
               def & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
-        -- elAttr "input" ("type" =: "text" <> "id" =: "search-input") blank
         V.fa "search icon fas fa-search"
         qSlow <- debounce 0.5 $ updated qDyn
         holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
       divClass "ui hidden divider" blank
-      mresp <- maybeDyn =<< getCache @CacheData
+      mresp <- maybeDyn =<< getCache @C.NeuronCache
       dyn_ $
         ffor mresp $ \case
-          Nothing -> text "Loading"
+          Nothing -> text "Loading JSON cache..."
           Just resp -> do
             eresp <- eitherDyn resp
             dyn_ $
@@ -75,20 +75,19 @@ bodyWidget = do
                   text "ERROR: "
                   dynText $ T.pack <$> errDyn
                 Right nDyn -> do
-                  let zindexDyn = uncurry ZIndex.buildZIndex <$> nDyn
+                  let zindexDyn = ffor nDyn $ \C.NeuronCache {..} ->
+                        ZIndex.buildZIndex _neuronCache_graph _neuronCache_errors
                   -- TODO: push dynamic inner
                   dyn_ $
-                    ffor2 zindexDyn qDyn $ \zindex mq ->
-                      runNeuronWeb rcfg $ ZIndex.renderZIndex Theme.Red zindex mq
+                    ffor zindexDyn $ \zindex ->
+                      runNeuronGhcjs $ ZIndex.renderZIndex Theme.Red zindex qDyn
 
-{- void $
-  runNeuronWeb rcfg $
-    simpleList zs $ \zDyn -> do
-      el "li" $
-        dyn_ $
-          ffor zDyn $ \(z :: Z.Zettel) ->
-            V.renderZettelLink Nothing Nothing Nothing z
--}
+routeConfigGhcjs :: RouteConfig t m
+routeConfigGhcjs =
+  RouteConfig True (\someR attrs w -> elAttr "a" (attrs <> "href" =: someRouteUrl someR) w) someRouteUrl
+  where
+    someRouteUrl :: Some Route -> Text
+    someRouteUrl sr = toText $ withSome sr routeHtmlPath
 
 getCache ::
   forall a t m.
