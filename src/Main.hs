@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Main where
@@ -18,6 +19,9 @@ import qualified Neuron.Web.ZIndex as ZIndex
 import Reflex.Dom.Core
 import qualified Reflex.Dom.Main as Main
 import Rememorate.Run (run)
+import qualified Text.URI as URI
+import Text.URI.QQ (queryKey)
+import Text.URI.Util (getQueryParam)
 
 main :: IO ()
 main =
@@ -33,16 +37,8 @@ headWidget = do
 -- - Statically render z-index in q.html?
 
 bodyWidget ::
-  ( DomBuilder t m,
-    MonadFix m,
-    MonadHold t m,
-    PostBuild t m,
-    PerformEvent t m,
-    TriggerEvent t m,
-    HasJSContext (Performable m),
-    MonadJSM (Performable m),
-    MonadHold t m
-  ) =>
+  forall t m.
+  (DomBuilder t m, MonadFix m, MonadHold t m, PostBuild t m, PerformEvent t m, TriggerEvent t m, HasJSContext (Performable m), MonadJSM (Performable m), MonadHold t m, MonadJSM m) =>
   m ()
 bodyWidget = do
   let runNeuronGhcjs = runNeuronWeb routeConfigGhcjs
@@ -67,10 +63,13 @@ bodyWidget = do
                     runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
                     divClass "ui text container" $ do
                       qDyn <- divClass "ui fluid icon input search" $ do
+                        initialQueryE <- urlQueryE [queryKey|q|]
                         qDyn <-
                           fmap value $
                             inputElement $
-                              def & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
+                              def
+                                & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
+                                & inputElementConfig_setValue .~ initialQueryE
                         V.fa "search icon fas fa-search"
                         qSlow <- debounce 0.5 $ updated qDyn
                         holdDyn Nothing $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
@@ -84,6 +83,14 @@ routeConfigGhcjs =
   where
     someRouteUrl :: Some Route -> Text
     someRouteUrl sr = toText $ withSome sr routeHtmlPath
+
+-- Return the value for given query key (eg: ?q=???) from the URL location.
+urlQueryE :: (MonadJSM m, PostBuild t m) => URI.RText 'URI.QueryKey -> m (Event t Text)
+urlQueryE key = do
+  uri <- URI.mkURI @Maybe <$> getLocationUrl
+  let mquery = getQueryParam key =<< uri
+  pb <- getPostBuild
+  pure $ maybe never (<$ pb) mquery
 
 getCache ::
   forall a t m.

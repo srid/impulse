@@ -27,6 +27,7 @@ executable rememorate
     , jsaddle
     , neuron
     , dependent-sum
+    , modern-uri
   if !impl(ghcjs)
     build-depends:
       warp,
