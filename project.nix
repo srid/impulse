@@ -49,6 +49,12 @@ let
       ghc = ["rememorate"];
       ghcjs = ["rememorate"];
     };
+
+    shellToolOverrides = 
+      let nixpkgs = import ./dep/nixpkgs { };
+      in _: _: with nixpkgs.haskell.packages.ghc865; {
+        inherit haskell-language-server;
+      };
   });
 in {
   inherit project reflexPlatform;
