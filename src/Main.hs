@@ -140,7 +140,9 @@ getCache ::
     HasJSContext (Performable m),
     MonadJSM (Performable m),
     MonadHold t m,
-    FromJSON a
+    MonadFix m,
+    FromJSON a,
+    Eq a
   ) =>
   m (Dynamic t (Maybe (Either String a)))
 getCache = do
@@ -149,7 +151,9 @@ getCache = do
     performRequestAsyncWithError $
       XhrRequest "GET" "cache.json" def <$ pb
   let resp = ffor resp' $ first show >=> decodeXhrResponseWithError
-  holdDyn Nothing $ Just <$> resp
+  mresp <- holdDyn Nothing $ Just <$> resp
+  -- Workaround for thrice triggering bug?
+  holdUniqDyn mresp
   where
     decodeXhrResponseWithError :: XhrResponse -> Either String a
     decodeXhrResponseWithError =
