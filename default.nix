@@ -1,7 +1,7 @@
 { system ? builtins.currentSystem
 }:
 let 
-  name = "rememorate";
+  name = "impulse";
   p = import ./project.nix { inherit system; };
   pkgs = p.reflexPlatform.nixpkgs;
   app = pkgs.lib.getAttr name p.project.ghcjs;

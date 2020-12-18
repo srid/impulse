@@ -18,7 +18,7 @@ let
         cm = hackGet ./dep/commonmark;
       in {
         relude = hackGet ./dep/relude;
-        rememorate = pkgs.lib.cleanSource (gitignoreSource ./.);
+        impulse = pkgs.lib.cleanSource (gitignoreSource ./.);
 
         # neuron & its dependencies (not already in reflex-platform)
         neuron = pkgs.runCommand "neuron" { buildInputs = [ neuronSrc ]; }
@@ -47,8 +47,8 @@ let
       };
 
       shells = {
-        ghc = ["rememorate"];
-        ghcjs = ["rememorate"];
+        ghc = ["impulse"];
+        ghcjs = ["impulse"];
       };
 
       shellToolOverrides = 

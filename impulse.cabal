@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               rememorate
+name:               impulse
 version:            0.1.0.0
 license:            BSD-3-Clause
 license-file:       LICENSE
@@ -8,14 +8,14 @@ maintainer:         srid@srid.ca
 build-type:         Simple
 extra-source-files: README.md
 
-executable rememorate
+executable impulse
   hs-source-dirs:     src
   main-is:            Main.hs
   -- TODO: Why is this not being recognized by Cabal (thus affecting HLS;
   -- forcing the user to explicitly open Run.hs)? Replacing with other-modules
   -- works, but that breaks ghcid's -T flag.
   exposed-modules:
-    Rememorate.Run
+    Impulse.Run
   build-depends:
       base
     , reflex

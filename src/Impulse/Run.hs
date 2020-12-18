@@ -6,7 +6,7 @@
 -----------------------------------------------------------------------------
 
 -- |
-module Rememorate.Run
+module Impulse.Run
   ( run,
   )
 where

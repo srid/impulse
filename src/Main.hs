@@ -8,6 +8,7 @@ import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import Data.Some (Some, withSome)
 import qualified Data.Text as T
+import Impulse.Run (run)
 import Language.Javascript.JSaddle (MonadJSM)
 import Neuron.Config.Type (Config (Config))
 import Neuron.Web.Cache.Type (NeuronCache)
@@ -24,7 +25,6 @@ import qualified Neuron.Web.View as V
 import qualified Neuron.Web.ZIndex as ZIndex
 import Reflex.Dom.Core
 import qualified Reflex.Dom.Main as Main
-import Rememorate.Run (run)
 import qualified Text.URI as URI
 import Text.URI.QQ (queryKey)
 import Text.URI.Util (getQueryParam)
