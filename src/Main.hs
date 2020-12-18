@@ -10,7 +10,6 @@ import Data.Some (Some, withSome)
 import qualified Data.Text as T
 import Language.Javascript.JSaddle (MonadJSM)
 import Neuron.Config.Type (Config (Config))
-import qualified Neuron.Config.Type as Config
 import qualified Neuron.Web.Cache.Type as C
 import Neuron.Web.Route (Route (Route_Search), RouteConfig (RouteConfig), routeHtmlPath, runNeuronWeb)
 import qualified Neuron.Web.Theme as Theme
@@ -29,12 +28,12 @@ main =
 
 headWidget :: DomBuilder t m => m ()
 headWidget = do
-  let dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "No title" "blue" False
-  V.renderRouteHead dummyConfig (Route_Search Nothing) "dummy"
+  -- TODO: Set this using cache.json fetched (how..?)
+  let dummyConfig = Config Nothing Nothing ["markdown"] "1.0" Nothing "Loading..." "blue" False
+  V.renderRouteHead dummyConfig (Route_Search Nothing) ""
 
--- TODO(before replacing existing z-index/search entirely)
--- - Tag query, and tag perma urls (to not break existing feature)
--- - Statically render z-index in q.html?
+-- TODO(before testing on srid.ca)
+-- - Finalize "q.html" (neuron.html? ...)
 
 bodyWidget ::
   forall t m.
@@ -57,10 +56,7 @@ bodyWidget = do
               -- TODO: push dynamic inner?
               dyn_ $
                 ffor nDyn $ \C.NeuronCache {..} -> do
-                  -- - Use `renderRouteBody` which includes actionbar?
                   V.bodyTemplate _neuronCache_neuronVersion _neuronCache_config $ do
-                    let neuronTheme = Theme.mkTheme $ Config.theme _neuronCache_config
-                    runNeuronGhcjs $ V.actionsNav neuronTheme Nothing Nothing
                     divClass "ui text container" $ do
                       mquery0 <- urlQueryE [queryKey|q|]
                       qDyn <- searchInput mquery0
@@ -87,7 +83,7 @@ searchInput mquery0 = do
           def
             & initialAttributes .~ ("placeholder" =: "Search here ..." <> "autofocus" =: "")
             & inputElementConfig_initialValue .~ fromMaybe "" mquery0
-    V.fa "search icon fas fa-search"
+    elClass "i" "search icon fas fa-search" blank
     qSlow <- debounce 0.5 $ updated qDyn
     holdDyn mquery0 $ fmap (\q -> if q == "" then Nothing else Just q) qSlow
 
