@@ -49,7 +49,7 @@ executable rememorate
     TypeApplications
     DeriveGeneric
 
-  ghc-options:        -Wall -threaded
+  ghc-options: -threaded -O -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -fno-show-valid-hole-fits
 
   if impl(ghcjs -any)
     ghc-options: -dedupe
