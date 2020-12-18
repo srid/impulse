@@ -14,7 +14,7 @@ import Neuron.Web.Cache.Type (NeuronCache)
 import qualified Neuron.Web.Cache.Type as C
 import Neuron.Web.Route
   ( NeuronWebT,
-    Route (Route_Search),
+    Route (..),
     RouteConfig (RouteConfig),
     routeHtmlPath,
     runNeuronWeb,
@@ -43,10 +43,10 @@ headWidget = do
           ["markdown"]
           "1.0"
           Nothing
-          "Loading..."
+          "TODO"
           "blue"
           False
-  V.renderRouteHead dummyConfig (Route_Search Nothing) ""
+  V.renderRouteHead dummyConfig (Route_Impulse Nothing) ""
 
 -- TODO(before testing on srid.ca)
 -- - Finalize "q.html" (/explore/? /impulse/? ...)

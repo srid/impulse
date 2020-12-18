@@ -1,4 +1,4 @@
-# rememorate
+# rememorate (soon to be renamed "impulse")
 
 WIP => https://github.com/srid/neuron/issues/108
 

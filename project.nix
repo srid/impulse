@@ -11,8 +11,7 @@ let
     useWarp = true;
 
     packages = let 
-      # neuronPrj = hackGet ./dep/neuron;
-      neuronPrj = ../neuron;
+      neuronPrj = hackGet ./dep/neuron;
       neuronSrc = neuronPrj + "/neuron";
       cm = hackGet ./dep/commonmark;
     in {
